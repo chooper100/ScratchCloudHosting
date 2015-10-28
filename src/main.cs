@@ -45,7 +45,17 @@ namespace Scratch_Cloud
 
             HttpWebResponse response = (HttpWebResponse)login.GetResponse();
             Console.WriteLine("Response: " + response.StatusDescription);
-            
+
+            Console.WriteLine("");
+            Console.WriteLine("Useful Stuff:");
+            string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
+
+            for (int i = 0; i < parts.Length; i++)
+            {
+                Console.WriteLine(parts[i]);
+            }
+
+            response.Close();
             Console.Read();
         }
     }
