@@ -1,9 +1,11 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
 
 namespace Scratch_Cloud
 {
@@ -159,6 +161,19 @@ namespace Scratch_Cloud
 
     class CloudSession
     {
+        public UserInfo User;
+        public int ProjectId;
+        public string CloudId;
+        public string Hash;
+        public string Connection;
+        public object Variables;
+        private object variables;
+
+        /// <summary>
+        /// Creates a new <see cref="CloudSession"/> object.
+        /// </summary>
+        /// <param name="user">The user to interact with the cloud data.</param>
+        /// <param name="projectId">The project id to connect to.</param>
         public static CloudSession Create(UserInfo user, int projectId)
         {
             //Prepare login request
@@ -182,7 +197,34 @@ namespace Scratch_Cloud
         
         private CloudSession(UserInfo user, int projectId, string cloudId)
         {
-            //Connect to cloud here
+            User = user;
+            ProjectId = projectId;
+            CloudId = cloudId;
+            Hash = md5(cloudId);
+        }
+
+        public void Connect()
+        {
+
+        }
+
+        /// <summary>
+        /// Calculates the md5 hash of a given string value.
+        /// </summary>
+        /// <param name="value">The value to compute the md5 hash of.</param>
+        private string md5(string value)
+        {
+            MD5 md5 = MD5.Create();
+            byte[] inputBytes = Encoding.UTF8.GetBytes(value);
+            byte[] hash = md5.ComputeHash(inputBytes);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("X2"));
+            }
+
+            return sb.ToString();
         }
     }
 }
