@@ -32,9 +32,8 @@ namespace Scratch_Cloud
             login.Headers.Add("X-Requested-With", "XMLHttpRequest");
             login.Host = "scratch.mit.edu";
             login.Method = "POST";
-
-            //Will improve this eventually to avoid SQL injection type inputs
-            string postData = "{\"username\":\"" + uname + "\", \"password\":\"" + pword + "\"}";
+            
+            string postData = JsonConvert.SerializeObject(new UserInput(uname, pword));
 
             Console.Write("Post data: ");
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -100,6 +99,18 @@ namespace Scratch_Cloud
     }
 }
 
+struct UserInput
+{
+    public string username;
+    public string password;
+
+    public UserInput(string uname, string pword)
+    {
+        username = uname;
+        password = pword;
+    }
+}
+
 struct User
 {
     public string Username;
@@ -109,7 +120,7 @@ struct User
     public User(string username, int id, string sessionid)
     {
         Username = username;
-        this.ID = id;
-        this.SessionID = sessionid;
+        ID = id;
+        SessionID = sessionid;
     }
 }
