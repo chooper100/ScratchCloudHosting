@@ -11,19 +11,14 @@ namespace Scratch_Cloud
     {
         static void Main(string[] args)
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Please enter your username:");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("Please enter your username:", true);
             string uname = Console.ReadLine();
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Please enter your password:");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("Please enter your password:", true);
             string pword = Console.ReadLine();
 
             Console.WriteLine("");
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Attempting Logon...");
+            Title("Attempting Logon...", true);
 
             HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
             login.Referer = "https://scratch.mit.edu";
@@ -35,8 +30,7 @@ namespace Scratch_Cloud
             
             string postData = JsonConvert.SerializeObject(new UserInput(uname, pword));
 
-            Console.Write("Post data: ");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("Post Data: ", false);
             Console.WriteLine(postData);
 
             byte[] byteData = Encoding.UTF8.GetBytes(postData);
@@ -50,14 +44,11 @@ namespace Scratch_Cloud
 
             HttpWebResponse response = (HttpWebResponse)login.GetResponse();
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("Response: ");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("Response: ", false);
             Console.WriteLine(response.StatusDescription);
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("");
-            Console.WriteLine("User Data:");
+            Title("User Data: ", true);
 
             string sessionid = "";
             string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
@@ -76,25 +67,33 @@ namespace Scratch_Cloud
             JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
 
             User user = new User(bodyData[0]["username"].ToString(),(int) bodyData[0]["id"], sessionid);
-
-            Console.Write("Username: ");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            
+            Title("Username: ", false);
             Console.WriteLine(user.Username);
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("ID: ");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("ID: ", false);
             Console.WriteLine(user.ID);
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("Session ID: ");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Title("Session ID: ", false);
             Console.WriteLine(user.SessionID);
 
             reader.Close();
             responseStream.Close();
             response.Close();
             Console.Read();
+        }
+        
+        private static void Title(string message, bool newLine)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            if (newLine)
+            {
+                Console.WriteLine(message);
+            } else
+            {
+                Console.Write(message);
+            }
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }
