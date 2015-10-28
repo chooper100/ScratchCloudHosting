@@ -21,6 +21,8 @@ namespace Scratch_Cloud
             Heading("Please enter your password:", true);
             string pword = Console.ReadLine();
 
+            //Log on
+
             Console.WriteLine("");
             Heading("Attempting Logon...", true);
             
@@ -29,15 +31,29 @@ namespace Scratch_Cloud
             Console.WriteLine("");
             Heading("Login Successful", true);
 
+            //Find cloud session
+
             Console.WriteLine("");
-            Heading("Starting Cloud Session...", true);
+            Heading("Finding Cloud Session...", true);
 
             CloudSession cloud = CloudSession.Create(user, 85458898);
 
             Heading("Cloud Session Found", true);
 
+            //Connect to cloud session
+
+            Console.WriteLine("");
+            Heading("Connecting to Cloud Session...", true);
+
+            cloud.Connect();
+
+            Heading("Connected...?", true);
+
             //Wait for enter key press
             Console.Read();
+
+            //Clean up
+            cloud.Dispose();
         }
         
         /// <summary>
@@ -159,15 +175,16 @@ namespace Scratch_Cloud
         }
     }
 
-    class CloudSession
+    class CloudSession : IDisposable
     {
         public UserInfo User;
         public int ProjectId;
         public string CloudId;
         public string Hash;
-        public string Connection;
-        public object Variables;
-        private object variables;
+        //public object Variables;
+        //private object variables;
+
+        UdpClient udpClient;
 
         /// <summary>
         /// Creates a new <see cref="CloudSession"/> object.
@@ -200,19 +217,23 @@ namespace Scratch_Cloud
             User = user;
             ProjectId = projectId;
             CloudId = cloudId;
-            Hash = md5(cloudId);
+            Hash = Md5(cloudId);
         }
 
         public void Connect()
         {
+            udpClient = new UdpClient("cloud.scratch.mit.edu", 531);
+            string body = JsonConvert.SerializeObject(new Packet(CloudId, Hash, User.Username, ProjectId, "handshake")) + "\n";
+            byte[] sendBytes = Encoding.UTF8.GetBytes(body);
+            udpClient.Send(sendBytes, sendBytes.Length);
 
         }
-
+        
         /// <summary>
         /// Calculates the md5 hash of a given string value.
         /// </summary>
         /// <param name="value">The value to compute the md5 hash of.</param>
-        private string md5(string value)
+        private string Md5(string value)
         {
             MD5 md5 = MD5.Create();
             byte[] inputBytes = Encoding.UTF8.GetBytes(value);
@@ -225,6 +246,29 @@ namespace Scratch_Cloud
             }
 
             return sb.ToString();
+        }
+
+        public void Dispose()
+        {
+            udpClient.Close();
+        }
+
+        private struct Packet
+        {
+            string token;
+            string token2;
+            string user;
+            int project_id;
+            string method;
+
+            public Packet(string token, string token2, string user, int project_id, string method)
+            {
+                this.token = token;
+                this.token2 = token2;
+                this.user = user;
+                this.project_id = project_id;
+                this.method = method;   
+            }
         }
     }
 }
