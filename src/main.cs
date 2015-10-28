@@ -9,9 +9,6 @@ namespace Scratch_Cloud
 {
     class Program
     {
-        //Represents the current user
-        static UserInfo User;
-
         static void Main(string[] args)
         {
             //Get user input
@@ -24,80 +21,11 @@ namespace Scratch_Cloud
 
             Console.WriteLine("");
             Heading("Attempting Logon...", true);
-
-            //Prepare login request
-
-            HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
-            login.Referer = "https://scratch.mit.edu"; // Required by Scratch servers
-            login.Headers.Add("Cookie", "scratchcsrftoken=a; scratchlanguage=en;");
-            login.Headers.Add("X-CSRFToken", "a");
-            login.Headers.Add("X-Requested-With", "XMLHttpRequest");
-            login.Host = "scratch.mit.edu";
-            login.Method = "POST";
             
-            //Generate post data (JSON object with properties username and password)
-            string postData = JsonConvert.SerializeObject(new UserInput(uname, pword));
-
-            Heading("Post Data: ", false);
-            Console.WriteLine(postData);
-
-            //Encode post data as byte array
-            byte[] byteData = Encoding.UTF8.GetBytes(postData);
-
-            login.ContentType = "application/x-www-form-urlencoded";
-            login.ContentLength = byteData.Length;
-
-            //Write post data to request data stream
-            Stream dataStream = login.GetRequestStream();
-            dataStream.Write(byteData, 0, byteData.Length);
-            dataStream.Close();
-
-            //Get request response
-            HttpWebResponse response = (HttpWebResponse)login.GetResponse();
-
-            Heading("Response: ", false);
-            Console.WriteLine(response.StatusDescription);
+            Scratch.Logon(uname, pword);
 
             Console.WriteLine("");
-            Heading("User Data: ", true);
-
-            //Get session id
-            string sessionid = "";
-            string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
-            for (int i = 0; i < parts.Length; i++) //For each cookie
-            {
-                string cookie = parts[i].TrimStart(" "[0]); //Remove leading spaces
-                string[] cookieParts = cookie.Split("="[0]); //Split by equals sine
-                if (cookieParts[0] == "scratchsessionsid") //If cookie contains the session id
-                {
-                    sessionid = cookieParts[1]; //Set sessionid to the session id
-                }
-            }
-
-            //Read response data
-            Stream responseStream = response.GetResponseStream();
-            StreamReader reader = new StreamReader(responseStream);
-
-            //Deserialize JSON object
-            JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
-
-            //Create user
-            User = new UserInfo(bodyData[0]["username"].ToString(),(int) bodyData[0]["id"], sessionid);
-            
-            //Output user info
-            Heading("Username: ", false);
-            Console.WriteLine(User.Username);
-
-            Heading("ID: ", false);
-            Console.WriteLine(User.ID);
-
-            Heading("Session ID: ", false);
-            Console.WriteLine(User.SessionID);
-
-            //Close all streams
-            reader.Close();
-            responseStream.Close();
-            response.Close();
+            Heading("Login Successful", true);
 
             //Wait for enter key press
             Console.Read();
@@ -123,19 +51,93 @@ namespace Scratch_Cloud
     }
 
     /// <summary>
-    /// Used for encoding login request data
+    /// Provides methods for interacting with Scratch.
     /// </summary>
-    struct UserInput
+    static class Scratch
     {
-        public string username;
-        public string password;
+        /// <summary>
+        /// Represents the current user.
+        /// </summary>
+        public static UserInfo User;
 
-        public UserInput(string uname, string pword)
+        /// <summary>
+        /// Logs in to Scratch with the specified username and password combination.
+        /// </summary>
+        /// <param name="uname">The username to use.</param>
+        /// <param name="pword">The password to use.</param>
+        public static void Logon(string uname, string pword)
         {
-            username = uname;
-            password = pword;
+            //Prepare login request
+            HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
+            login.Referer = "https://scratch.mit.edu"; // Required by Scratch servers
+            login.Headers.Add("Cookie", "scratchcsrftoken=a; scratchlanguage=en;");
+            login.Headers.Add("X-CSRFToken", "a");
+            login.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            login.Host = "scratch.mit.edu";
+            login.Method = "POST";
+
+            //Generate post data (JSON object with properties username and password)
+            string postData = JsonConvert.SerializeObject(new UserInput(uname, pword));
+            
+            //Encode post data as byte array
+            byte[] byteData = Encoding.UTF8.GetBytes(postData);
+
+            login.ContentType = "application/x-www-form-urlencoded";
+            login.ContentLength = byteData.Length;
+
+            //Write post data to request data stream
+            Stream dataStream = login.GetRequestStream();
+            dataStream.Write(byteData, 0, byteData.Length);
+            dataStream.Close();
+
+            //Get request response
+            HttpWebResponse response = (HttpWebResponse)login.GetResponse();
+            
+            //Get session id
+            string sessionid = "";
+            string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
+            for (int i = 0; i < parts.Length; i++) //For each cookie
+            {
+                string cookie = parts[i].TrimStart(" "[0]); //Remove leading spaces
+                string[] cookieParts = cookie.Split("="[0]); //Split by equals sine
+                if (cookieParts[0] == "scratchsessionsid") //If cookie contains the session id
+                {
+                    sessionid = cookieParts[1]; //Set sessionid to the session id
+                }
+            }
+
+            //Read response data
+            Stream responseStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(responseStream);
+
+            //Deserialize JSON object
+            JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
+
+            //Create user
+            User = new UserInfo(bodyData[0]["username"].ToString(), (int)bodyData[0]["id"], sessionid);
+            
+            //Clean up
+            reader.Close();
+            responseStream.Close();
+            response.Close();
+        }
+
+        /// <summary>
+        /// Used for encoding login request data
+        /// </summary>
+        private struct UserInput
+        {
+            public string username;
+            public string password;
+
+            public UserInput(string uname, string pword)
+            {
+                username = uname;
+                password = pword;
+            }
         }
     }
+    
 
     /// <summary>
     /// Contains user info
