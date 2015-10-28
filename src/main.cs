@@ -12,13 +12,18 @@ namespace Scratch_Cloud
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Please enter your username:");
+            Console.ForegroundColor = ConsoleColor.Gray;
             string uname = Console.ReadLine();
 
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Please enter your password:");
+            Console.ForegroundColor = ConsoleColor.Gray;
             string pword = Console.ReadLine();
 
             Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Attempting Logon...");
 
             HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
@@ -32,7 +37,9 @@ namespace Scratch_Cloud
             //Will improve this eventually to avoid SQL injection type inputs
             string postData = "{\"username\":\"" + uname + "\", \"password\":\"" + pword + "\"}";
 
-            Console.WriteLine("Post data: " + postData);
+            Console.Write("Post data: ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(postData);
 
             byte[] byteData = Encoding.UTF8.GetBytes(postData);
 
@@ -44,15 +51,21 @@ namespace Scratch_Cloud
             dataStream.Close();
 
             HttpWebResponse response = (HttpWebResponse)login.GetResponse();
-            Console.WriteLine("Response: " + response.StatusDescription);
 
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("Response: ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(response.StatusDescription);
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("");
             Console.WriteLine("Useful Stuff:");
             string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
 
+            Console.ForegroundColor = ConsoleColor.Gray;
             for (int i = 0; i < parts.Length; i++)
             {
-                Console.WriteLine(parts[i]);
+                Console.WriteLine(parts[i].Trim(" "[0]));
             }
 
             response.Close();
