@@ -22,10 +22,17 @@ namespace Scratch_Cloud
             Console.WriteLine("");
             Heading("Attempting Logon...", true);
             
-            Scratch.Logon(uname, pword);
+            UserInfo user = Scratch.Logon(uname, pword);
 
             Console.WriteLine("");
             Heading("Login Successful", true);
+
+            Console.WriteLine("");
+            Heading("Starting Cloud Session...", true);
+
+            CloudSession cloud = CloudSession.Create(user, 85458898);
+
+            Heading("Cloud Session Found", true);
 
             //Wait for enter key press
             Console.Read();
@@ -51,21 +58,16 @@ namespace Scratch_Cloud
     }
 
     /// <summary>
-    /// Provides methods for interacting with Scratch.
+    /// Provides methods for interacting with https://scratch.mit.edu/.
     /// </summary>
     static class Scratch
     {
-        /// <summary>
-        /// Represents the current user.
-        /// </summary>
-        public static UserInfo User;
-
         /// <summary>
         /// Logs in to Scratch with the specified username and password combination.
         /// </summary>
         /// <param name="uname">The username to use.</param>
         /// <param name="pword">The password to use.</param>
-        public static void Logon(string uname, string pword)
+        public static UserInfo Logon(string uname, string pword)
         {
             //Prepare login request
             HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
@@ -113,13 +115,13 @@ namespace Scratch_Cloud
             //Deserialize JSON object
             JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
 
-            //Create user
-            User = new UserInfo(bodyData[0]["username"].ToString(), (int)bodyData[0]["id"], sessionid);
-            
             //Clean up
             reader.Close();
             responseStream.Close();
             response.Close();
+
+            //Create user
+            return new UserInfo(bodyData[0]["username"].ToString(), (int)bodyData[0]["id"], sessionid);
         }
 
         /// <summary>
@@ -138,9 +140,8 @@ namespace Scratch_Cloud
         }
     }
     
-
     /// <summary>
-    /// Contains user info
+    /// Represents a user.
     /// </summary>
     struct UserInfo
     {
@@ -153,6 +154,35 @@ namespace Scratch_Cloud
             Username = username;
             ID = id;
             SessionID = sessionid;
+        }
+    }
+
+    class CloudSession
+    {
+        public static CloudSession Create(UserInfo user, int projectId)
+        {
+            //Prepare login request
+            HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/projects/" + projectId + "/cloud-data.js");
+            login.Referer = "https://scratch.mit.edu"; // Required by Scratch servers
+            login.Headers.Add("Cookie", "scratchcsrftoken=a; scratchlanguage=en; scratchsessionsid=" + user.SessionID + ";");
+            login.Headers.Add("X-CSRFToken", "a");
+            login.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            login.Host = "scratch.mit.edu";
+            login.Method = "GET";
+            
+            //Get request response
+            HttpWebResponse response = (HttpWebResponse)login.GetResponse();
+
+            //Read response data
+            Stream responseStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(responseStream);
+            
+            return new CloudSession(user, projectId, reader.ReadToEnd().Substring(1495, 36));
+        }
+        
+        private CloudSession(UserInfo user, int projectId, string cloudId)
+        {
+            //Connect to cloud here
         }
     }
 }
