@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Scratch_Cloud
 {
@@ -59,17 +58,58 @@ namespace Scratch_Cloud
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("");
-            Console.WriteLine("Useful Stuff:");
-            string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
+            Console.WriteLine("User Data:");
 
-            Console.ForegroundColor = ConsoleColor.Gray;
+            string sessionid = "";
+            string[] parts = response.Headers["Set-Cookie"].Split(";"[0]);
             for (int i = 0; i < parts.Length; i++)
             {
-                Console.WriteLine(parts[i].Trim(" "[0]));
+                string cookie = parts[i].TrimStart(" "[0]);
+                string[] cookieParts = cookie.Split("="[0]);
+                if (cookieParts[0] == "scratchsessionsid")
+                {
+                    sessionid = cookieParts[1];
+                }
             }
 
+            Stream responseStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(responseStream);
+            JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
+
+            User user = new User(bodyData[0]["username"].ToString(),(int) bodyData[0]["id"], sessionid);
+
+            Console.Write("Username: ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(user.Username);
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("ID: ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(user.ID);
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("Session ID: ");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(user.SessionID);
+
+            reader.Close();
+            responseStream.Close();
             response.Close();
             Console.Read();
         }
+    }
+}
+
+struct User
+{
+    public string Username;
+    public int ID;
+    public string SessionID;
+
+    public User(string username, int id, string sessionid)
+    {
+        Username = username;
+        this.ID = id;
+        this.SessionID = sessionid;
     }
 }
