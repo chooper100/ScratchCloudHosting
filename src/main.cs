@@ -9,6 +9,9 @@ namespace Scratch_Cloud
 {
     class Program
     {
+        //Represents the current user
+        static UserInfo User;
+
         static void Main(string[] args)
         {
             //Get user input
@@ -79,17 +82,17 @@ namespace Scratch_Cloud
             JArray bodyData = (JArray)JsonConvert.DeserializeObject(reader.ReadToEnd());
 
             //Create user
-            User user = new User(bodyData[0]["username"].ToString(),(int) bodyData[0]["id"], sessionid);
+            User = new UserInfo(bodyData[0]["username"].ToString(),(int) bodyData[0]["id"], sessionid);
             
             //Output user info
             Heading("Username: ", false);
-            Console.WriteLine(user.Username);
+            Console.WriteLine(User.Username);
 
             Heading("ID: ", false);
-            Console.WriteLine(user.ID);
+            Console.WriteLine(User.ID);
 
             Heading("Session ID: ", false);
-            Console.WriteLine(user.SessionID);
+            Console.WriteLine(User.SessionID);
 
             //Close all streams
             reader.Close();
@@ -137,13 +140,13 @@ namespace Scratch_Cloud
     /// <summary>
     /// Contains user info
     /// </summary>
-    struct User
+    struct UserInfo
     {
         public string Username;
         public int ID;
         public string SessionID;
 
-        public User(string username, int id, string sessionid)
+        public UserInfo(string username, int id, string sessionid)
         {
             Username = username;
             ID = id;
