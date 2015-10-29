@@ -181,6 +181,9 @@ namespace Scratch_Cloud
         }
     }
 
+    /// <summary>
+    /// Represents a cloud session.
+    /// </summary>
     class CloudSession : IDisposable
     {
         public UserInfo User;
@@ -188,7 +191,8 @@ namespace Scratch_Cloud
         public string CloudId;
         public string Hash;
 
-        UdpClient udpClient;
+        //Used to recieve packets
+        private UdpClient udpClient;
 
         /// <summary>
         /// Creates a new <see cref="CloudSession"/> object.
@@ -224,6 +228,9 @@ namespace Scratch_Cloud
             Hash = Md5(cloudId);
         }
 
+        /// <summary>
+        /// Connects the cloud session.
+        /// </summary>
         public void Connect()
         {
             udpClient = new UdpClient("cloud.scratch.mit.edu", 531);
@@ -236,6 +243,11 @@ namespace Scratch_Cloud
             udpClient.BeginReceive(new AsyncCallback(RecieveCallback), null);
         }
 
+        /// <summary>
+        /// Sets a cloud variable.
+        /// </summary>
+        /// <param name="name">The name of the variable.</param>
+        /// <param name="value">The value of the variable.</param>
         public void Set(string name, int value)
         {
             udpClient = new UdpClient("cloud.scratch.mit.edu", 531);
@@ -245,7 +257,7 @@ namespace Scratch_Cloud
 
             Hash = Md5(Hash);
         }
-
+        
         private void RecieveCallback(IAsyncResult ar)
         {
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 531);
@@ -276,11 +288,17 @@ namespace Scratch_Cloud
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Closes the connection.
+        /// </summary>
         public void Dispose()
         {
             udpClient.Close();
         }
 
+        /// <summary>
+        /// Represents a handshake packet.
+        /// </summary>
         private class Packet
         {
             public string token;
@@ -298,7 +316,10 @@ namespace Scratch_Cloud
                 this.method = method;   
             }
         }
-
+        
+        /// <summary>
+        /// Represents a set packet.
+        /// </summary>
         private class SetPacket : Packet
         {
             public string name;
