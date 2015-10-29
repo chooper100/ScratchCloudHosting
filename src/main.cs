@@ -49,6 +49,12 @@ namespace Scratch_Cloud
 
             Heading("Connected...?", true);
 
+            //Attempt set var
+
+            cloud.Set("Test", 123);
+
+            Heading("Done", true);
+
             //Wait for enter key press
             Console.Read();
 
@@ -181,8 +187,6 @@ namespace Scratch_Cloud
         public int ProjectId;
         public string CloudId;
         public string Hash;
-        //public object Variables;
-        //private object variables;
 
         UdpClient udpClient;
 
@@ -227,8 +231,32 @@ namespace Scratch_Cloud
             byte[] sendBytes = Encoding.UTF8.GetBytes(body);
             udpClient.Send(sendBytes, sendBytes.Length);
 
+            Hash = Md5(Hash);
+
+            udpClient.BeginReceive(new AsyncCallback(RecieveCallback), null);
         }
-        
+
+        public void Set(string name, int value)
+        {
+            udpClient = new UdpClient("cloud.scratch.mit.edu", 531);
+            string body = JsonConvert.SerializeObject(new SetPacket(CloudId, Hash, User.Username, ProjectId, "set", name, value)) + "\n";
+            byte[] sendBytes = Encoding.UTF8.GetBytes(body);
+            udpClient.Send(sendBytes, sendBytes.Length);
+
+            Hash = Md5(Hash);
+        }
+
+        private void RecieveCallback(IAsyncResult ar)
+        {
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 531);
+            byte[] receiveBytes = udpClient.EndReceive(ar, ref endPoint);
+            string receiveString = Encoding.ASCII.GetString(receiveBytes);
+
+            Console.WriteLine("Received: {0}", receiveString);
+
+            udpClient.BeginReceive(new AsyncCallback(RecieveCallback), null);
+        }
+
         /// <summary>
         /// Calculates the md5 hash of a given string value.
         /// </summary>
@@ -253,13 +281,13 @@ namespace Scratch_Cloud
             udpClient.Close();
         }
 
-        private struct Packet
+        private class Packet
         {
-            string token;
-            string token2;
-            string user;
-            int project_id;
-            string method;
+            public string token;
+            public string token2;
+            public string user;
+            public int project_id;
+            public string method;
 
             public Packet(string token, string token2, string user, int project_id, string method)
             {
@@ -268,6 +296,18 @@ namespace Scratch_Cloud
                 this.user = user;
                 this.project_id = project_id;
                 this.method = method;   
+            }
+        }
+
+        private class SetPacket : Packet
+        {
+            public string name;
+            public int value;
+
+            public SetPacket(string token, string token2, string user, int project_id, string method, string name, int value) : base(token, token2, user, project_id, method)
+            {
+                this.name = name;
+                this.value = value;
             }
         }
     }
