@@ -91,7 +91,7 @@ namespace Scratch_Cloud
         /// </summary>
         /// <param name="uname">The username to use.</param>
         /// <param name="pword">The password to use.</param>
-        public static UserInfo Logon(string uname, string pword)
+        public static UserInfo Logon(string username, string password)
         {
             //Prepare login request
             HttpWebRequest login = (HttpWebRequest)WebRequest.Create("https://scratch.mit.edu/login/");
@@ -103,7 +103,7 @@ namespace Scratch_Cloud
             login.Method = "POST";
 
             //Generate post data (JSON object with properties username and password)
-            string postData = JsonConvert.SerializeObject(new UserInput(uname, pword));
+            string postData = JsonConvert.SerializeObject(new UserInput(username, password));
             
             //Encode post data as byte array
             byte[] byteData = Encoding.UTF8.GetBytes(postData);
@@ -156,10 +156,10 @@ namespace Scratch_Cloud
             public string username;
             public string password;
 
-            public UserInput(string uname, string pword)
+            public UserInput(string username, string password)
             {
-                username = uname;
-                password = pword;
+                this.username = username;
+                this.password = password;
             }
         }
     }
